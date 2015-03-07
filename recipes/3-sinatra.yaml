@@ -1,0 +1,68 @@
+kind: List
+apiVersion: v1beta2
+items:
+- kind: ImageRepository
+  apiVersion: v1beta1
+  metadata:
+    name: sinatra-image
+- kind: BuildConfig
+  apiVersion: v1beta1
+  metadata:
+    name: sinatra-build
+  parameters:
+    strategy:
+      type: STI
+      stiStrategy:
+        image: openshift/ruby-20-centos7
+    source:
+      type: Git
+      git:
+        ref: master
+        uri: https://github.com/openshift/simple-openshift-sinatra-sti.git
+    output:
+      to:
+        name: sinatra-image
+- kind: DeploymentConfig
+  apiVersion: v1beta1
+  metadata:
+    name: sinatra-dc
+  triggers:
+  - type: ConfigChange
+  - type: ImageChange
+    imageChangeParams:
+      automatic: true
+      containerNames:
+      - sinatra-image
+      from:
+        name: sinatra-image
+      tag: latest
+  template:
+    strategy:
+      type: Recreate
+    controllerTemplate:
+      podTemplate:
+        desiredState:
+          manifest:
+            version: v1beta2
+            containers:
+            - name: sinatra-image
+              image: sinatra-image:latest
+              ports:
+              - containerPort: 8080
+        labels:
+          name: sinatra-pod
+      replicaSelector:
+        name: sinatra-pod
+      replicas: 1
+- kind: Service
+  apiVersion: v1beta2
+  id: sinatra-service
+  port: 8080
+  selector:
+    name: sinatra-pod
+- kind: Route
+  apiVersion: v1beta1
+  metadata:
+    name: sinatra-route
+  host: hello-sinatra.cloudapps.example.com
+  serviceName: sinatra-service

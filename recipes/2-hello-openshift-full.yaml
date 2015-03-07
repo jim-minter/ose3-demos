@@ -1,0 +1,28 @@
+kind: List
+apiVersion: v1beta2
+items:
+- kind: Pod
+  apiVersion: v1beta2
+  id: hello-openshift-pod
+  desiredState:
+    manifest:
+      version: v1beta1
+      containers:
+      - name: hello-openshift
+        image: openshift/hello-openshift
+        ports:
+        - containerPort: 8080
+  labels:
+    name: hello-openshift
+- kind: Service
+  apiVersion: v1beta2
+  id: hello-openshift-service
+  port: 27017
+  selector:
+    name: hello-openshift
+- kind: Route
+  apiVersion: v1beta1
+  metadata:
+    name: hello-openshift-route
+  host: hello-openshift.cloudapps.example.com
+  serviceName: hello-openshift-service

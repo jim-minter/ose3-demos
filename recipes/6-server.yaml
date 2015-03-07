@@ -1,0 +1,68 @@
+kind: List
+apiVersion: v1beta2
+items:
+- kind: ImageRepository
+  apiVersion: v1beta1
+  metadata:
+    name: server-image
+- kind: BuildConfig
+  apiVersion: v1beta1
+  metadata:
+    name: server-build
+  parameters:
+    strategy:
+      type: STI
+      stiStrategy:
+        image: jminter-sti-gcc
+    source:
+      type: Git
+      git:
+        ref: master
+        uri: http://192.168.0.254/export/c-web-server.git
+    output:
+      to:
+        name: server-image
+- kind: DeploymentConfig
+  apiVersion: v1beta1
+  metadata:
+    name: server-dc
+  triggers:
+  - type: ConfigChange
+  - type: ImageChange
+    imageChangeParams:
+      automatic: true
+      containerNames:
+      - server-image
+      from:
+        name: server-image
+      tag: latest
+  template:
+    strategy:
+      type: Recreate
+    controllerTemplate:
+      podTemplate:
+        desiredState:
+          manifest:
+            version: v1beta2
+            containers:
+            - name: server-image
+              image: server-image:latest
+              ports:
+              - containerPort: 8080
+        labels:
+          deploymentconfig: server-dc
+      replicaSelector:
+        deploymentconfig: server-dc
+      replicas: 1
+- kind: Service
+  apiVersion: v1beta2
+  id: server-service
+  port: 8080
+  selector:
+    deploymentconfig: server-dc
+- kind: Route
+  apiVersion: v1beta1
+  metadata:
+    name: server-route
+  host: hello-server.cloudapps.example.com
+  serviceName: server-service
