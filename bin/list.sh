@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# nb: doesn't do projects
+# nb: doesn't get projects
 
-for rc in build buildconfig deploymentconfig imagerepository images pod replicationcontroller route service; do
-  echo $rc
-  osc get $rc
-  echo
-done
+osc get builds,buildconfigs,deploymentconfigs,imagerepositories,images,pods,replicationcontrollers,routes,services

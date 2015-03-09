@@ -1,11 +1,9 @@
 #!/bin/bash
 
-# nb: doesn't do projects
+# nb: doesn't delete projects or pushed docker images
 
-for rc in deploymentconfig replicationcontroller build buildconfig imagerepository images pod route service; do
-  items=$(osc get $rc | tail -n +2 | awk '{print $1}')
-  for i in $items; do
-    osc delete $rc $i >/dev/null
-  done
-  echo $rc
-done
+osc delete builds,buildconfigs,deploymentconfigs,imagerepositories,images,pods,replicationcontrollers,routes,services
+
+# bug?
+
+osc delete pods
