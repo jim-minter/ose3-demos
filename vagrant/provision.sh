@@ -94,7 +94,7 @@ desiredState:
         value: "false"
 EOF
 
-  pushd /vagrant/training
+  pushd /vagrant/training/beta1
   CERT_DIR=/var/lib/openshift/openshift.local.certificates/master KUBERNETES_MASTER=https://ose3-master.example.com:8443 CONTAINER_ACCESSIBLE_API_HOST=ose3-master.example.com bash install-registry.sh
   popd
 
