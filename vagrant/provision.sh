@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 add_vagrant_keys() {
   cat <<EOF >/root/.ssh/authorized_keys
@@ -42,94 +42,51 @@ interface_ip() {
 }
 
 install_master() {
-  sed -i -e 's/^OPTIONS=.*/OPTIONS="--loglevel=4 --public-master=ose3-master.example.com"/' /etc/sysconfig/openshift-master 
-
-  sed -i -e 's/^OPTIONS=.*/OPTIONS="--loglevel=4"/' /etc/sysconfig/openshift-node
-
-  sed -i -e 's/^OPTIONS=.*/OPTIONS="-v=4"/' /etc/sysconfig/openshift-sdn-master
-
-  sed -i -e 's!^MASTER_URL=.*!MASTER_URL="http://ose3-master.example.com:4001"!; s!^OPTIONS=.*!OPTIONS="-v=4"!; s!^DOCKER_OPTIONS=.*!DOCKER_OPTIONS="--insecure-registry=0.0.0.0/0 -b=lbr0 --mtu=1450 --selinux-enabled"!' /etc/sysconfig/openshift-sdn-node
-
-  sed -i -e "s!^MINION_IP=.*!MINION_IP=\"$IP\"!" /etc/sysconfig/openshift-sdn-node
-
-  # echo OPENSHIFT_PROFILE=web >>/etc/sysconfig/openshift-master
-
-cat <<EOF >/etc/rc.d/rc.local
-#!/bin/bash
-
-systemctl start openshift-master
-sleep 10
-systemctl start openshift-sdn-master
-systemctl start openshift-sdn-node
-EOF
-
-  chmod 0755 /etc/rc.d/rc.local
-  /etc/rc.d/rc.local
-
-  OPENSHIFT_CA_DATA=$(sed ':a;N;$!ba;s/\n/\\n/g' /var/lib/openshift/openshift.local.certificates/master/root.crt)
-
-  osc create -f - <<EOF
-kind: Pod
-apiVersion: v1beta2
-id: router
-desiredState:
-  manifest:
-    version: v1beta1
-    containers:
-    - name: origin-haproxy-router-mainrouter
-      image: registry.access.redhat.com/openshift3_beta/ose-haproxy-router
-      command:
-      - --loglevel=4
-      ports:
-      - containerPort: 80
-        hostPort: 80
-      - containerPort: 443
-        hostPort: 443
-      env:
-      - name: OPENSHIFT_MASTER
-        value: "https://ose3-master.example.com:8443"
-      - name: OPENSHIFT_CA_DATA
-        value: "$OPENSHIFT_CA_DATA"
-      - name: OPENSHIFT_INSECURE
-        value: "false"
-EOF
-
-  pushd /vagrant/training/beta1
-  CERT_DIR=/var/lib/openshift/openshift.local.certificates/master KUBERNETES_MASTER=https://ose3-master.example.com:8443 CONTAINER_ACCESSIBLE_API_HOST=ose3-master.example.com bash install-registry.sh
+  cp -r -f /vagrant/training/beta3/ansible/* /etc/ansible/
+  sed -i -e 's/ose3-master.example.com/ose3-master.example.com openshift_ip='\''192.168.0.40'\''/g' /etc/ansible/hosts
+  pushd /vagrant/openshift-ansible
+  ANSIBLE_HOST_KEY_CHECKING=0 python -u /usr/bin/ansible-playbook playbooks/byo/config.yml
   popd
 
-  sleep 20
+  >/etc/openshift-passwd
+  htpasswd -b /etc/openshift-passwd joe redhat
+  htpasswd -b /etc/openshift-passwd alice redhat
 
-  osc create -f - <<EOF
-kind: List
-apiVersion: v1beta2
-items:
-- kind: Node
-  apiVersion: v1beta1
-  id: ose3-node1.example.com
-  resources:
-    capacity:
-      cpu: 1
-      memory: 256000000
+  sed -i -e 's/name: anypassword/name: apache_auth/; s/kind: AllowAllPasswordIdentityProvider/kind: HTPasswdPasswordIdentityProvider/; /kind: HTPasswdPasswordIdentityProvider/i \      file: \/etc\/openshift-passwd' /etc/openshift/master.yaml
 
-- kind: Node
-  apiVersion: v1beta1
-  id: ose3-node2.example.com
-  resources:
-    capacity:
-      cpu: 1
-      memory: 256000000
+  systemctl restart openshift-master
+
+  sleep 10
+
+  osadm new-project demo --display-name="OpenShift 3 Demo" --description="This is the first demo project with OpenShift v3" --admin=joe
+
+  pushd /vagrant/training/beta3
+  osc create -f quota.json --namespace=demo
+  popd
+
+  osadm router --create --credentials=/var/lib/openshift/openshift.local.certificates/openshift-router/.kubeconfig --images='registry.access.redhat.com/openshift3_beta/ose-${component}:${version}'
+
+  osadm registry --create --credentials=/var/lib/openshift/openshift.local.certificates/openshift-registry/.kubeconfig --images='registry.access.redhat.com/openshift3_beta/ose-${component}:${version}'
+
+  while [ $(osc get pods | grep Running | wc -l) -ne 2 ]; do
+    sleep 5
+  done
+
+  pushd /vagrant/openshift-ansible
+  cat <<EOF >>/etc/ansible/hosts
+ose3-node1.example.com openshift_ip='192.168.0.41'
+ose3-node2.example.com openshift_ip='192.168.0.42'
 EOF
+  ANSIBLE_HOST_KEY_CHECKING=0 python -u /usr/bin/ansible-playbook playbooks/byo/config.yml
+  popd
 
-  registry_push jminter-sti-gcc
-  registry_push openshift/ruby-20-centos7
-  registry_push openshift/wildfly-8-centos
-
-  echo OK >/tmp/step1
+  # registry_push jminter-sti-gcc
+  ## registry_push openshift/ruby-20-centos7
+  ## registry_push openshift/wildfly-8-centos
 }
 
 registry_push() {
-  DOCKER_EP=$(osc get services docker-registry | tail -n +2 | awk '{print $4 ":" $5}')
+  DOCKER_EP=$(osc get services docker-registry -o template --template='{{.spec.portalIP}}:{{(index .spec.ports 0).port}}')
   docker tag $1 $DOCKER_EP/$(basename $1)
   while true; do
     if docker push $DOCKER_EP/$(basename $1); then
@@ -140,36 +97,9 @@ registry_push() {
 
 }
 
-install_node() {
-  while true; do
-    if [ "$(ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@ose3-master.example.com 'cat /tmp/step1' 2>/dev/null)" = "OK" ]; then
-      break
-    fi
-    sleep 5
-  done
-
-  rsync -e 'ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no' -av root@ose3-master.example.com:/var/lib/openshift/openshift.local.certificates /var/lib/openshift/ 2>/dev/null
-
-  sed -i -e 's/^OPTIONS=.*/OPTIONS="--loglevel=4"/' /etc/sysconfig/openshift-node
-
-  sed -i -e 's!^MASTER_URL=.*!MASTER_URL="http://ose3-master.example.com:4001"!; s!^OPTIONS=.*!OPTIONS="-v=4"!; s!^DOCKER_OPTIONS=.*!DOCKER_OPTIONS="--insecure-registry=0.0.0.0/0 -b=lbr0 --mtu=1450 --selinux-enabled"!' /etc/sysconfig/openshift-sdn-node
-
-  sed -i -e "s!^MINION_IP=.*!MINION_IP=\"$IP\"!" /etc/sysconfig/openshift-sdn-node
-
-  ln -s /usr/lib/systemd/system/openshift-sdn-node.service /etc/systemd/system/multi-user.target.wants/openshift-sdn-node.service
-  systemctl start openshift-sdn-node
-}
-
 add_vagrant_keys
 docker load </vagrant/jminter-sti-gcc/jminter-sti-gcc.tar
 
-curl -so /etc/yum.repos.d/rhel-7-server-rpms.repo http://192.168.0.254:8086/rhel-7-server-rpms.repo
-http_proxy=http://192.168.0.254:8080/ yum install -y nmap-ncat PyYAML
-
-IP=$(interface_ip eth1)
-
-if [ $IP = 192.168.0.40 ]; then
+if [ $(interface_ip eth1) = 192.168.0.40 ]; then
   install_master
-else
-  install_node
 fi
