@@ -1,27 +1,53 @@
 kind: List
 apiVersion: v1beta2
 items:
-- kind: Pod
-  apiVersion: v1beta2
-  id: hello-openshift-pod
-  desiredState:
-    manifest:
-      version: v1beta1
-      containers:
-      - name: hello-openshift
-        image: openshift/hello-openshift
-        ports:
-        - containerPort: 8080
-  labels:
+- kind: ImageStream
+  apiVersion: v1beta1
+  metadata:
     name: hello-openshift
+
+- kind: DeploymentConfig
+  apiVersion: v1beta1
+  metadata:
+    name: hello-openshift
+  triggers:
+  - type: ConfigChange
+  - type: ImageChange
+    imageChangeParams:
+      containerNames:
+      - hello-openshift
+      from:
+        name: hello-openshift
+  latestVersion: 1
+  template:
+    strategy:
+      type: Recreate
+    controllerTemplate:
+      podTemplate:
+        desiredState:
+          manifest:
+            containers:
+            - name: hello-openshift
+              image: openshift/hello-openshift
+        labels:
+          name: hello-openshift
+        nodeSelector:
+          region: primary
+      replicaSelector:
+        name: hello-openshift
+      replicas: 1
+
 - kind: Service
-  apiVersion: v1beta2
+  apiVersion: v1beta1
   id: hello-openshift-service
+  containerPort: 8080
   port: 27017
   selector:
     name: hello-openshift
+
 - kind: Route
   apiVersion: v1beta1
+  id: hello-openshift-route
   metadata:
     name: hello-openshift-route
   host: hello-openshift.cloudapps.example.com

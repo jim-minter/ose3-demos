@@ -49,14 +49,25 @@ install_master() {
   popd
 
   >/etc/openshift-passwd
-  htpasswd -b /etc/openshift-passwd joe redhat
-  htpasswd -b /etc/openshift-passwd alice redhat
+  for user in joe alice; do
+    useradd $user
+    echo redhat | passwd --stdin $user
+    htpasswd -b /etc/openshift-passwd $user redhat
+  done
 
   sed -i -e 's/name: anypassword/name: apache_auth/; s/kind: AllowAllPasswordIdentityProvider/kind: HTPasswdPasswordIdentityProvider/; /kind: HTPasswdPasswordIdentityProvider/i \      file: \/etc\/openshift-passwd' /etc/openshift/master.yaml
+
+  cp /vagrant/training/beta3/scheduler.json /etc/openshift
+  sed -i -e 's!schedulerConfigFile: ""!schedulerConfigFile: "/etc/openshift/scheduler.json"!' /etc/openshift/master.yaml
 
   systemctl restart openshift-master
 
   sleep 10
+
+  for user in joe alice
+  do
+    su -c "cd; osc login -u $user -p redhat --certificate-authority=/var/lib/openshift/openshift.local.certificates/ca/cert.crt --server=https://ose3-master.example.com:8443" $user
+  done
 
   osadm new-project demo --display-name="OpenShift 3 Demo" --description="This is the first demo project with OpenShift v3" --admin=joe
 
@@ -68,7 +79,8 @@ install_master() {
 
   osadm registry --create --credentials=/var/lib/openshift/openshift.local.certificates/openshift-registry/.kubeconfig --images='registry.access.redhat.com/openshift3_beta/ose-${component}:${version}'
 
-  while [ $(osc get pods | grep Running | wc -l) -ne 2 ]; do
+  while [ $(osc get pods | grep Running | wc -l) -ne 2 ]
+  do
     sleep 5
   done
 
@@ -79,6 +91,22 @@ ose3-node2.example.com openshift_ip='192.168.0.42'
 EOF
   ANSIBLE_HOST_KEY_CHECKING=0 python -u /usr/bin/ansible-playbook playbooks/byo/config.yml
   popd
+
+  osc update node ose3-master.example.com --patch='{ "apiVersion": "v1beta3", "metadata": { "labels": { "region": "infra", "zone": "NA" } } }'
+  osc update node ose3-node1.example.com --patch='{ "apiVersion": "v1beta3", "metadata": { "labels": { "region": "primary", "zone": "east" } } }'
+  osc update node ose3-node2.example.com --patch='{ "apiVersion": "v1beta3", "metadata": { "labels": { "region": "primary", "zone": "west" } } }'
+
+  osc update deploymentconfig router --patch='{ "apiVersion": "v1beta1", "template": { "controllerTemplate": { "podTemplate": { "nodeSelector": { "region": "infra" } } } } }'
+  osc update deploymentconfig docker-registry --patch='{ "apiVersion": "v1beta1", "template": { "controllerTemplate": { "podTemplate": { "nodeSelector": { "region": "infra" } } } } }'
+
+  for node in ose3-master ose3-node1 ose3-node2
+  do
+    ssh $node.example.com service openshift-node restart
+  done
+
+  cp -r /var/lib/openshift/openshift.local.certificates /vagrant
+
+  osc create -f /vagrant/training/beta3/image-streams.json -n openshift
 
   # registry_push jminter-sti-gcc
   ## registry_push openshift/ruby-20-centos7

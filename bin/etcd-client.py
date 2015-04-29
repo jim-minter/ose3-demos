@@ -27,7 +27,7 @@ def get_winsize(fd=2):
 
 
 def ls(url, key, level=""):
-    j = s.get(url + key).json()
+    j = s.get(url + key, cert=cert, verify=ca).json()
     for node in sorted(j["node"].get("nodes", []), key=lambda n: n["key"]):
         print level + node["key"]
         if "dir" in node:
@@ -47,15 +47,15 @@ def main(args):
     winsize = get_winsize()
 
     if args.cmd == "ls":
-        ls("http://%s:%s/v2/keys" % (args.host, args.port), args.key)
+        ls("https://%s:%s/v2/keys" % (args.host, args.port), args.key)
     else:
-        watch("http://%s:%s/v2/keys%s?wait=true&recursive=true" % (args.host, args.port, args.key))
+        watch("https://%s:%s/v2/keys%s?wait=true&recursive=true" % (args.host, args.port, args.key))
 
 
 def watch(url):
     wi = ""
     while True:
-        j = s.get(url + wi).json()
+        j = s.get(url + wi, cert=cert, verify=ca).json()
         print j["action"] + " " + j["node"]["key"]
         if "value" in j["node"]:
             print j["node"]["value"]
@@ -64,4 +64,10 @@ def watch(url):
 
 
 if __name__ == "__main__":
+    root = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + \
+        "/openshift.local.certificates"
+    cert = (root + "/master/etcd-client.crt", root + "/master/etcd-client.key")
+    ca = root + "/ca/cert.crt"
+    args = parse_args()
+
     main(parse_args())

@@ -1,19 +1,8 @@
 #!/bin/bash
 
-if [ -z "$1" ]; then
-  echo "usage: $0 project"
+if [ $# -ne 2 ]; then
+  echo "usage: $0 project_name admin_user"
   exit 1
 fi
 
-osc create -f - <<EOF
-kind: Project
-apiVersion: v1beta1
-metadata:
-  name: $1
-  annotations:
-    description: $1-description
-displayName: $1-displayname
-EOF
-
-openshift ex config set-context "$1" --cluster=master --user=admin --namespace="$1"
-openshift ex config use-context "$1"
+osadm new-project "$1" --display-name="$1" --description="$1-description" --admin="$2"

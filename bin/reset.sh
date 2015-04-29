@@ -2,8 +2,8 @@
 
 # nb: doesn't delete projects or pushed docker images
 
-osc delete builds,buildconfigs,deploymentconfigs,imagerepositories,images,pods,replicationcontrollers,routes,services
+osc delete builds,buildconfigs,deploymentconfigs,imagerepositories,images,pods,replicationcontrollers,routes,services --all
 
 # bug?
 
-osc delete pods
+osc delete pods --all
