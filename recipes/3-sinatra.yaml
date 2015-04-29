@@ -1,40 +1,71 @@
 kind: List
-apiVersion: v1beta2
+apiVersion: v1beta1
+creationTimestamp: null
 items:
-- kind: ImageRepository
+- kind: Service
+  apiVersion: v1beta1
+  id: simple-openshift-sinatra
+  containerPort: 8080
+  creationTimestamp: null
+  port: 8080
+  portName: simple-openshift-sinatra-sti-tcp-8080
+  ports:
+  - name: simple-openshift-sinatra-sti-tcp-8080
+    containerPort: 8080
+    port: 8080
+    protocol: TCP
+  protocol: TCP
+  selector:
+    deploymentconfig: simple-openshift-sinatra-sti
+- kind: ImageStream
   apiVersion: v1beta1
   metadata:
-    name: sinatra-image
+    name: simple-openshift-sinatra-sti
+    creationTimestamp: null
+  spec: {}
+  status:
+    dockerImageRepository: ''
 - kind: BuildConfig
   apiVersion: v1beta1
   metadata:
-    name: sinatra-build
+    name: simple-openshift-sinatra-sti
+    creationTimestamp: null
+  triggers:
+  - type: github
+    github:
+      secret: 02KHZmbpYirm3V2ts7b3
+  - type: generic
+    generic:
+      secret: F4EJelGXbVRefyXHU4Hf
   parameters:
     strategy:
       type: STI
       stiStrategy:
-        image: openshift/ruby-20-centos7
+        builderImage: registry.access.redhat.com/openshift3_beta/ruby-20-rhel7
+        clean: true
+        image: registry.access.redhat.com/openshift3_beta/ruby-20-rhel7
     source:
       type: Git
       git:
-        ref: master
-        uri: https://github.com/openshift/simple-openshift-sinatra-sti.git
+        uri: http://192.168.0.254/export/simple-openshift-sinatra-sti.git
     output:
       to:
-        name: sinatra-image
+        name: simple-openshift-sinatra-sti
 - kind: DeploymentConfig
   apiVersion: v1beta1
   metadata:
-    name: sinatra-dc
+    name: simple-openshift-sinatra-sti
+    creationTimestamp: null
   triggers:
   - type: ConfigChange
   - type: ImageChange
     imageChangeParams:
       automatic: true
       containerNames:
-      - sinatra-image
+      - simple-openshift-sinatra-sti
       from:
-        name: sinatra-image
+        name: simple-openshift-sinatra-sti
+      lastTriggeredImage: ''
       tag: latest
   template:
     strategy:
@@ -43,26 +74,22 @@ items:
       podTemplate:
         desiredState:
           manifest:
+            id: ''
             version: v1beta2
             containers:
-            - name: sinatra-image
-              image: sinatra-image:latest
+            - name: simple-openshift-sinatra-sti
+              capabilities: {}
+              image: library/simple-openshift-sinatra-sti:latest
+              imagePullPolicy: ''
               ports:
-              - containerPort: 8080
+              - name: simple-openshift-sinatra-sti-tcp-8080
+                containerPort: 8080
+                protocol: TCP
+              resources: {}
+            restartPolicy: {}
+            volumes: null
         labels:
-          name: sinatra-pod
+          deploymentconfig: simple-openshift-sinatra-sti
       replicaSelector:
-        name: sinatra-pod
+        deploymentconfig: simple-openshift-sinatra-sti
       replicas: 1
-- kind: Service
-  apiVersion: v1beta2
-  id: sinatra-service
-  port: 8080
-  selector:
-    name: sinatra-pod
-- kind: Route
-  apiVersion: v1beta1
-  metadata:
-    name: sinatra-route
-  host: hello-sinatra.cloudapps.example.com
-  serviceName: sinatra-service

@@ -108,9 +108,9 @@ EOF
 
   osc create -f /vagrant/training/beta3/image-streams.json -n openshift
 
-  # registry_push jminter-sti-gcc
-  ## registry_push openshift/ruby-20-centos7
-  ## registry_push openshift/wildfly-8-centos
+  registry_push jminter-sti-gcc
+  registry_push registry.access.redhat.com/openshift3_beta/ruby-20-rhel7
+  registry_push docker.io/openshift/wildfly-8-centos
 }
 
 registry_push() {
