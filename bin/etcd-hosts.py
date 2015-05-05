@@ -46,23 +46,42 @@ def _update_etc_hosts(action, hostname):
 
 
 def watch(url, f):
-    s = requests.Session()
+    global index
 
-    wi = "&waitIndex=1"
     while True:
         try:
-            j = s.get(url + wi, cert=cert, verify=ca).json()
+            j = s.get(url + "&waitIndex=%u" % index, cert=cert,
+                      verify=ca).json()
             f(j)
-            wi = "&waitIndex=%u" % (j["node"]["modifiedIndex"] + 1)
+            index = j["node"]["modifiedIndex"] + 1
+
         except KeyboardInterrupt:
             break
 
+
+def init():
+    global index
+
+    r = s.get("https://%s:%s/v2/keys/routes?recursive=true" %
+              (args.host, args.port), cert=cert, verify=ca)
+    index = int(r.headers["X-Etcd-Index"])
+    j = r.json()
+
+    if "node" in j:
+        for domain in j["node"]["nodes"]:
+            hosts = [json.loads(l["value"])["host"] for l in domain["nodes"]]
+            for host in hosts:
+                _update_etc_hosts("create", host)
+
 if __name__ == "__main__":
+    s = requests.Session()
     args = parse_args()
     root = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + \
         "/openshift.local.certificates"
     cert = (root + "/master/etcd-client.crt", root + "/master/etcd-client.key")
     ca = root + "/ca/cert.crt"
     ip = socket.gethostbyname(args.host)
+
+    init()
     watch("https://%s:%s/v2/keys/routes?wait=true&recursive=true" %
           (args.host, args.port), update_etc_hosts)
