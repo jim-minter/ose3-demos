@@ -104,6 +104,8 @@ EOF
     ssh $node.example.com service openshift-node restart
   done
 
+  sleep 10
+
   cp -r /var/lib/openshift/openshift.local.certificates /vagrant
 
   osc create -f /vagrant/training/beta3/image-streams.json -n openshift
@@ -111,6 +113,8 @@ EOF
   registry_push jminter-sti-gcc
   registry_push registry.access.redhat.com/openshift3_beta/ruby-20-rhel7
   registry_push docker.io/openshift/wildfly-8-centos
+
+  iptables -I INPUT -p udp -m udp --dport 53 -j ACCEPT
 }
 
 registry_push() {
