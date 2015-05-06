@@ -1,73 +1,47 @@
 kind: Template
 apiVersion: v1beta1
 metadata:
-  name: jee
+  name: integrated
 parameters:
-- name: MYSQL_USER
-  description: administrator username
-  value: mysql
-- name: MYSQL_PASSWORD
-  description: administrator password
-  value: mysql
-- name: MYSQL_ROOT_PASSWORD
-  description: database password
-  value: supersecret
 - name: MYSQL_DATABASE
-  description: database name
-  value: sample
+  value: root
+- name: MYSQL_ROOT_PASSWORD
+  from: '[a-zA-Z0-9]{8}'
+  generate: expression
 items:
-- kind: Service
-  apiVersion: v1beta1
-  id: frontend
-  containerPort: 8080
-  port: 8080
-  selector:
-    name: frontend
 - kind: ImageRepository
   apiVersion: v1beta1
   metadata:
-    name: origin-jee-sample
-- kind: ImageRepository
-  apiVersion: v1beta1
-  metadata:
-    name: wildfly-8-centos
+    name: webapp-image
 - kind: BuildConfig
   apiVersion: v1beta1
   metadata:
-    name: jee-sample-build
-  triggers:
-  - type: imageChange
-    imageChange:
-      from:
-        name: wildfly-8-centos
-      image: openshift/wildfly-8-centos
-      tag: latest
+    name: webapp-build
   parameters:
     strategy:
       type: STI
       stiStrategy:
-        image: openshift/wildfly-8-centos
+        image: registry.access.redhat.com/openshift3_beta/ruby-20-rhel7
     source:
       type: Git
       git:
-        uri: git://github.com/bparees/javaee7-hol.git
+        uri: git://github.com/openshift/ruby-hello-world.git
     output:
       to:
-        name: origin-jee-sample
-  labels:
-    name: jee-sample-build
+        name: webapp-image
 - kind: DeploymentConfig
   apiVersion: v1beta1
   metadata:
-    name: frontend
+    name: webapp-dc
   triggers:
+  - type: ConfigChange
   - type: ImageChange
     imageChangeParams:
       automatic: true
       containerNames:
-      - jee-sample
+      - webapp
       from:
-        name: origin-jee-sample
+        name: webapp-image
       tag: latest
   template:
     strategy:
@@ -78,37 +52,30 @@ items:
           manifest:
             version: v1beta1
             containers:
-            - name: jee-sample
-              image: origin-jee-sample
+            - name: webapp
+              image: webapp-image
               ports:
               - containerPort: 8080
               env:
-              - name: MYSQL_USER
-                value: ${MYSQL_USER}
-              - name: MYSQL_PASSWORD
-                value: ${MYSQL_PASSWORD}
               - name: MYSQL_ROOT_PASSWORD
                 value: ${MYSQL_ROOT_PASSWORD}
               - name: MYSQL_DATABASE
                 value: ${MYSQL_DATABASE}
-              - name: MYSQL_DB_NAME
-                value: ${MYSQL_DATABASE}
         labels:
-          name: frontend
+          name: webapp-pod
       replicaSelector:
-        name: frontend
+        name: webapp-pod
       replicas: 1
 - kind: Service
   apiVersion: v1beta1
-  id: mysql
-  containerPort: 3306
-  port: 3306
+  id: webapp-service
+  port: 8080
   selector:
-    name: database
+    name: webapp-pod
 - kind: DeploymentConfig
   apiVersion: v1beta1
   metadata:
-    name: database
+    name: database-dc
   triggers:
   - type: ConfigChange
   template:
@@ -120,27 +87,29 @@ items:
           manifest:
             version: v1beta1
             containers:
-            - name: jee-database
+            - name: database
               image: mysql
               ports:
               - containerPort: 3306
               env:
-              - name: MYSQL_USER
-                value: ${MYSQL_USER}
-              - name: MYSQL_PASSWORD
-                value: ${MYSQL_PASSWORD}
               - name: MYSQL_ROOT_PASSWORD
                 value: ${MYSQL_ROOT_PASSWORD}
               - name: MYSQL_DATABASE
                 value: ${MYSQL_DATABASE}
         labels:
-          name: database
+          name: database-pod
       replicaSelector:
-        name: database
+        name: database-pod
       replicas: 1
+- kind: Service
+  apiVersion: v1beta1
+  id: database
+  port: 3306
+  selector:
+    name: database-pod
 - kind: Route
   apiVersion: v1beta1
   metadata:
-    name: frontend-route
-  host: jee.cloudapps.example.com
-  serviceName: frontend
+    name: webapp-route
+  host: integrated.cloudapps.example.com
+  serviceName: webapp-service

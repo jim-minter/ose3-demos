@@ -64,12 +64,14 @@ install_master() {
 
   sleep 10
 
+  osadm new-project demo --display-name="OpenShift 3 Demo" --description="This is the first demo project with OpenShift v3" --admin=joe
+
   for user in joe alice
   do
     su -c "cd; osc login -u $user -p redhat --certificate-authority=/var/lib/openshift/openshift.local.certificates/ca/cert.crt --server=https://ose3-master.example.com:8443" $user
   done
 
-  osadm new-project demo --display-name="OpenShift 3 Demo" --description="This is the first demo project with OpenShift v3" --admin=joe
+  su -c "cd; osc project demo" joe
 
   pushd /vagrant/training/beta3
   osc create -f quota.json --namespace=demo

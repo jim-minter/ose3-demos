@@ -1,7 +1,7 @@
 kind: List
 apiVersion: v1beta2
 items:
-- kind: ImageRepository
+- kind: ImageStream
   apiVersion: v1beta1
   metadata:
     name: server-image
@@ -9,6 +9,10 @@ items:
   apiVersion: v1beta1
   metadata:
     name: server-build
+  triggers:
+  - type: generic
+    generic:
+      secret: secret
   parameters:
     strategy:
       type: STI
@@ -18,7 +22,7 @@ items:
       type: Git
       git:
         ref: master
-        uri: http://192.168.0.254/export/c-web-server.git
+        uri: git://192.168.0.254/c-web-server
     output:
       to:
         name: server-image

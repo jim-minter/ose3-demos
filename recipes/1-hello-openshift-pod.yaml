@@ -10,6 +10,5 @@ desiredState:
       image: openshift/hello-openshift
       ports:
       - containerPort: 8080
-        hostPort: 6061
 labels:
   name: hello-openshift

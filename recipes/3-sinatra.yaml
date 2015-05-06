@@ -1,95 +1,95 @@
-kind: List
 apiVersion: v1beta1
 creationTimestamp: null
 items:
-- kind: Service
-  apiVersion: v1beta1
-  id: simple-openshift-sinatra
+- apiVersion: v1beta1
   containerPort: 8080
   creationTimestamp: null
+  id: simple-openshift-sinatra
+  kind: Service
   port: 8080
   portName: simple-openshift-sinatra-sti-tcp-8080
   ports:
-  - name: simple-openshift-sinatra-sti-tcp-8080
-    containerPort: 8080
+  - containerPort: 8080
+    name: simple-openshift-sinatra-sti-tcp-8080
     port: 8080
     protocol: TCP
   protocol: TCP
   selector:
     deploymentconfig: simple-openshift-sinatra-sti
-- kind: ImageStream
-  apiVersion: v1beta1
+- apiVersion: v1beta1
+  kind: ImageStream
   metadata:
-    name: simple-openshift-sinatra-sti
     creationTimestamp: null
+    name: simple-openshift-sinatra-sti
   spec: {}
   status:
-    dockerImageRepository: ''
-- kind: BuildConfig
-  apiVersion: v1beta1
+    dockerImageRepository: ""
+- apiVersion: v1beta1
+  kind: BuildConfig
   metadata:
-    name: simple-openshift-sinatra-sti
     creationTimestamp: null
-  triggers:
-  - type: github
-    github:
-      secret: 02KHZmbpYirm3V2ts7b3
-  - type: generic
-    generic:
-      secret: F4EJelGXbVRefyXHU4Hf
+    name: simple-openshift-sinatra-sti
   parameters:
+    output:
+      to:
+        name: simple-openshift-sinatra-sti
+    source:
+      git:
+        uri: git://192.168.0.254/simple-openshift-sinatra-sti
+      type: Git
     strategy:
-      type: STI
       stiStrategy:
         builderImage: registry.access.redhat.com/openshift3_beta/ruby-20-rhel7
         clean: true
         image: registry.access.redhat.com/openshift3_beta/ruby-20-rhel7
-    source:
-      type: Git
-      git:
-        uri: http://192.168.0.254/export/simple-openshift-sinatra-sti.git
-    output:
-      to:
-        name: simple-openshift-sinatra-sti
-- kind: DeploymentConfig
-  apiVersion: v1beta1
-  metadata:
-    name: simple-openshift-sinatra-sti
-    creationTimestamp: null
+      type: STI
   triggers:
-  - type: ConfigChange
-  - type: ImageChange
-    imageChangeParams:
-      automatic: true
-      containerNames:
-      - simple-openshift-sinatra-sti
-      from:
-        name: simple-openshift-sinatra-sti
-      lastTriggeredImage: ''
-      tag: latest
+  - github:
+      secret: GpkYmPgw8HK_ICb3lVfz
+    type: github
+  - generic:
+      secret: y3dS8QGAkbe1Y5Jq_wYf
+    type: generic
+- apiVersion: v1beta1
+  kind: DeploymentConfig
+  metadata:
+    creationTimestamp: null
+    name: simple-openshift-sinatra-sti
   template:
-    strategy:
-      type: Recreate
     controllerTemplate:
       podTemplate:
         desiredState:
           manifest:
-            id: ''
-            version: v1beta2
             containers:
-            - name: simple-openshift-sinatra-sti
-              capabilities: {}
+            - capabilities: {}
               image: library/simple-openshift-sinatra-sti:latest
-              imagePullPolicy: ''
+              imagePullPolicy: ""
+              name: simple-openshift-sinatra-sti
               ports:
-              - name: simple-openshift-sinatra-sti-tcp-8080
-                containerPort: 8080
+              - containerPort: 8080
+                name: simple-openshift-sinatra-sti-tcp-8080
                 protocol: TCP
               resources: {}
+            id: ""
             restartPolicy: {}
+            version: v1beta2
             volumes: null
         labels:
           deploymentconfig: simple-openshift-sinatra-sti
       replicaSelector:
         deploymentconfig: simple-openshift-sinatra-sti
       replicas: 1
+    strategy:
+      type: Recreate
+  triggers:
+  - type: ConfigChange
+  - imageChangeParams:
+      automatic: true
+      containerNames:
+      - simple-openshift-sinatra-sti
+      from:
+        name: simple-openshift-sinatra-sti
+      lastTriggeredImage: ""
+      tag: latest
+    type: ImageChange
+kind: List
