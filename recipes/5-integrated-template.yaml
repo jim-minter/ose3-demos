@@ -63,9 +63,11 @@ items:
                 value: ${MYSQL_DATABASE}
         labels:
           name: webapp-pod
+        nodeSelector:
+          region: primary
       replicaSelector:
         name: webapp-pod
-      replicas: 1
+      replicas: 2
 - kind: Service
   apiVersion: v1beta1
   id: webapp-service
@@ -98,6 +100,8 @@ items:
                 value: ${MYSQL_DATABASE}
         labels:
           name: database-pod
+        nodeSelector:
+          region: primary
       replicaSelector:
         name: database-pod
       replicas: 1

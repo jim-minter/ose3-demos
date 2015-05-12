@@ -1,0 +1,8 @@
+kind: Pod
+apiVersion: v1beta3
+metadata:
+  name: hello-openshift-pod
+spec:
+  containers:
+  - name: hello-openshift-container
+    image: openshift/hello-openshift

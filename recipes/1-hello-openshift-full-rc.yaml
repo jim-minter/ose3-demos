@@ -1,0 +1,38 @@
+kind: List
+apiVersion: v1beta3
+items:
+- kind: ReplicationController
+  apiVersion: v1beta3
+  metadata:
+    name: hello-openshift-rc
+  spec:
+    replicas: 1
+    selector:
+      name: hello-openshift-pod
+    template:
+      metadata:
+        labels:
+          name: hello-openshift-pod
+      spec:
+        containers:
+        - name: hello-openshift-container
+          image: openshift/hello-openshift
+        nodeSelector:
+          region: primary
+
+- kind: Service
+  apiVersion: v1beta3
+  metadata:
+    name: hello-openshift-service
+  spec:
+    ports:
+    - port: 8080
+    selector:
+      name: hello-openshift-pod
+
+- kind: Route
+  apiVersion: v1beta1
+  metadata:
+    name: hello-openshift-route
+  host: hello-openshift.cloudapps.example.com
+  serviceName: hello-openshift-service

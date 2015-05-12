@@ -55,6 +55,8 @@ items:
               - containerPort: 8080
         labels:
           deploymentconfig: server-dc
+        nodeSelector:
+          region: primary
       replicaSelector:
         deploymentconfig: server-dc
       replicas: 1

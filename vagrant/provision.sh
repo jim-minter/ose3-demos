@@ -113,6 +113,7 @@ EOF
   osc create -f /vagrant/training/beta3/image-streams.json -n openshift
 
   registry_push jminter-sti-gcc
+  registry_push jminter-sti-wildfly
   registry_push registry.access.redhat.com/openshift3_beta/ruby-20-rhel7
   registry_push docker.io/openshift/wildfly-8-centos
 
@@ -133,6 +134,7 @@ registry_push() {
 
 add_vagrant_keys
 docker load </vagrant/jminter-sti-gcc/jminter-sti-gcc.tar
+docker load </vagrant/jminter-sti-wildfly/jminter-sti-wildfly.tar
 
 if [ $(interface_ip eth1) = 192.168.0.40 ]; then
   install_master
