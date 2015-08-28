@@ -64,11 +64,11 @@ items:
           - name: DB_JNDI
             value: java:jboss/datasources/MySqlDS
           - name: DB_DATABASE
-            value: ${MYSQL_DATABASE}
+            value: "$MYSQL_DATABASE"
           - name: DB_USERNAME
-            value: ${MYSQL_USER}
+            value: "$MYSQL_USER"
           - name: DB_PASSWORD
-            value: ${MYSQL_PASSWORD}
+            value: "$MYSQL_PASS"
           - name: OPENSHIFT_DNS_PING_SERVICE_NAME
             value: bankingapp
           - name: OPENSHIFT_DNS_PING_SERVICE_PORT

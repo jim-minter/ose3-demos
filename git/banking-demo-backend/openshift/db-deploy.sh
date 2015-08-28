@@ -52,7 +52,7 @@ items:
           - name: MYSQL_USER
             value: "$MYSQL_USER"
           - name: MYSQL_PASSWORD
-            value: "$MYSQL_PASSWORD"
+            value: "$MYSQL_PASS"
 
 - kind: Service
   apiVersion: v1
