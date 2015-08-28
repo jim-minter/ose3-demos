@@ -1,8 +1,8 @@
 kind: List
-apiVersion: v1beta3
+apiVersion: v1
 items:
 - kind: ReplicationController
-  apiVersion: v1beta3
+  apiVersion: v1
   metadata:
     name: hello-openshift-rc
   spec:
@@ -16,12 +16,11 @@ items:
       spec:
         containers:
         - name: hello-openshift-container
-          image: openshift/hello-openshift
-        nodeSelector:
-          region: primary
+          image: openshift/hello-openshift:latest
+          imagePullPolicy: IfNotPresent
 
 - kind: Service
-  apiVersion: v1beta3
+  apiVersion: v1
   metadata:
     name: hello-openshift-service
   spec:
@@ -31,8 +30,11 @@ items:
       name: hello-openshift-pod
 
 - kind: Route
-  apiVersion: v1beta1
+  apiVersion: v1
   metadata:
     name: hello-openshift-route
-  host: hello-openshift.cloudapps.example.com
-  serviceName: hello-openshift-service
+  spec:
+    host: hello-openshift.cloudapps.example.com
+    to:
+      kind: Service
+      name: hello-openshift-service

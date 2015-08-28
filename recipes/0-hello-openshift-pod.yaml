@@ -1,8 +1,9 @@
 kind: Pod
-apiVersion: v1beta3
+apiVersion: v1
 metadata:
   name: hello-openshift-pod
 spec:
   containers:
   - name: hello-openshift-container
-    image: openshift/hello-openshift
+    image: openshift/hello-openshift:latest
+    imagePullPolicy: IfNotPresent

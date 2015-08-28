@@ -1,0 +1,11 @@
+#!/bin/bash
+
+new_env() {
+  if ! grep -q "^$1=" ../environment 2>/dev/null; then
+    echo $1=\"$2\" >>../environment
+  fi
+}
+
+random() {
+  dd if=/dev/urandom bs=1 count=6 status=none | base64
+}

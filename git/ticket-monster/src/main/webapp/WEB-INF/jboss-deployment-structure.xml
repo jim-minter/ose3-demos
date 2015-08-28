@@ -1,0 +1,15 @@
+<jboss-deployment-structure>
+    <deployment>
+        <exclusions>
+            <module name="org.jboss.resteasy.resteasy-jackson2-provider" />
+        </exclusions>
+        <!-- This allows you to define additional dependencies, it is the same
+  as using the Dependencies: manifest attribute -->
+        <dependencies>
+            <module name="org.jboss.as.naming" />
+            <module name="org.jboss.as.server" />
+            <module name="org.jboss.msc" />
+            <module name="org.jboss.resteasy.resteasy-jackson-provider" services="import" />
+        </dependencies>
+    </deployment>
+</jboss-deployment-structure>

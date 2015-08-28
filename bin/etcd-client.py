@@ -10,7 +10,7 @@ import textwrap
 
 def parse_args():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--host", nargs="?", default="localhost")
+    ap.add_argument("--host", nargs="?", default="openshift.example.com")
     ap.add_argument("--port", nargs="?", default="4001")
     ap.add_argument("cmd", choices=["ls", "watch"])
     ap.add_argument("key", nargs="?", default="/")
@@ -49,7 +49,8 @@ def main(args):
     if args.cmd == "ls":
         ls("https://%s:%s/v2/keys" % (args.host, args.port), args.key)
     else:
-        watch("https://%s:%s/v2/keys%s?wait=true&recursive=true" % (args.host, args.port, args.key))
+        watch("https://%s:%s/v2/keys%s?wait=true&recursive=true" %
+              (args.host, args.port, args.key))
 
 
 def watch(url):
@@ -64,10 +65,9 @@ def watch(url):
 
 
 if __name__ == "__main__":
-    root = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + \
-        "/openshift.local.certificates"
-    cert = (root + "/master/etcd-client.crt", root + "/master/etcd-client.key")
-    ca = root + "/ca/cert.crt"
+    root = "/etc/openshift/master"
+    cert = (root + "/master.etcd-client.crt", root + "/master.etcd-client.key")
+    ca = root + "/ca.crt"
     args = parse_args()
 
     main(parse_args())

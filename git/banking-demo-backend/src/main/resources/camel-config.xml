@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camel="http://camel.apache.org/schema/spring"
+	xsi:schemaLocation="
+         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+         http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+	<bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName" value="java:jboss/datasources/MySqlDS" />
+	</bean>
+	<bean id="sql" class="org.apache.camel.component.sql.SqlComponent">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	<bean id="iae" class="java.lang.IllegalArgumentException" />
+
+	<camelContext xmlns="http://camel.apache.org/schema/spring">
+		<dataFormats>
+			<json id="jackson" library="Jackson" />
+			<json id="jacksonTransferMoneyReq" library="Jackson"
+				unmarshalTypeName="com.redhat.banking.TransferMoneyReq" />
+		</dataFormats>
+
+		<route id="getCustomer">
+			<from uri="servlet:/getCustomer" />
+			<to
+				uri="sql:INSERT IGNORE INTO customers(username, balance) VALUES (:#username, 100.00)" />
+			<to uri="sql:SELECT id, firstname, surname, address, email, username, balance AS amount FROM customers WHERE username = :#username" />
+			<marshal ref="jackson" />
+		</route>
+
+		<route id="getCurrentBalance">
+			<from uri="servlet:/getCurrentBalance" />
+			<to uri="sql: SELECT balance AS amount FROM customers WHERE id = :#id" />
+			<marshal ref="jackson" />
+		</route>
+
+		<route id="getTransactions">
+			<from uri="servlet:/getTransactions" />
+			<to
+				uri="sql:SELECT id, fromid, payee, amount, details, DATE_FORMAT(txdate, &quot;%d/%m/%Y %H:%m:%S&quot;) as txdate from transactions WHERE fromId = :#id || payee = :#id ORDER BY txdate DESC" />
+			<marshal ref="jackson" />
+		</route>
+
+		<route id="transferMoney">
+			<from uri="servlet:/transferMoney" />
+			<unmarshal ref="jacksonTransferMoneyReq" />
+
+			<to
+				uri="sql:SELECT balance FROM customers WHERE id = :#${body.fromid}?outputHeader=balance&amp;outputType=SelectOne" />
+			<choice>
+				<when>
+					<simple>${body.amount} &gt; ${header.balance} || ${body.amount} &lt;= 0</simple>
+					<throwException ref="iae" />
+				</when>
+			</choice>
+
+			<to
+				uri="sql:INSERT INTO transactions(fromid, payee, amount, details) VALUES (:#${body.fromid}, :#${body.payee}, :#${body.amount}, 'Transfer')" />
+			<to
+				uri="sql:UPDATE customers SET balance = balance - :#${body.amount} WHERE id = :#${body.fromid}" />
+			<to
+				uri="sql:UPDATE customers SET balance = balance + :#${body.amount} WHERE id = :#${body.payee}" />
+
+			<marshal ref="jackson" />
+		</route>
+
+	</camelContext>
+</beans>

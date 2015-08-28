@@ -1,0 +1,81 @@
+kind: List
+apiVersion: v1
+items:
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: hello-world-py
+
+- kind: BuildConfig
+  apiVersion: v1
+  metadata:
+    name: hello-world-py
+  spec:
+    triggers:
+    - type: Generic
+      generic:
+        secret: secret
+    - type: ImageChange
+    strategy:
+      type: Source
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: python:3.3
+          namespace: openshift
+    source:
+      type: Git
+      git:
+        uri: git://openshift.example.com/demo/hello-world-py
+        ref: master
+    output:
+      to:
+        kind: ImageStreamTag
+        name: hello-world-py:latest
+
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: hello-world-py
+  spec:
+    replicas: 1
+    selector:
+      deploymentConfig: hello-world-py
+    template:
+      metadata:
+        labels:
+          deploymentConfig: hello-world-py
+        name: hello-world-py
+      spec:
+        containers:
+        - name: hello-world-py
+          image: hello-world-py
+          ports:
+          - containerPort: 8080
+    triggers:
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - hello-world-py
+        from:
+          kind: ImageStream
+          name: hello-world-py
+
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: hello-world-py
+  spec:
+    ports:
+    - port: 8080
+    selector:
+      deploymentConfig: hello-world-py
+
+- kind: Route
+  apiVersion: v1
+  metadata:
+    name: hello-world-py
+  spec:
+    to:
+      name: hello-world-py

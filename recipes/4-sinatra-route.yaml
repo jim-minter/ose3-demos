@@ -1,7 +1,0 @@
-kind: Route
-apiVersion: v1beta1
-id: simple-openshift-sinatra-route
-metadata:
-  name: simple-openshift-sinatra-route
-host: hello-sinatra.cloudapps.example.com
-serviceName: simple-openshift-sinatra
