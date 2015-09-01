@@ -43,7 +43,7 @@ objects:
     source:
       type: Git
       git:
-        uri: git://openshift.example.com/demo/ticket-monster
+        uri: git://openshift.example.com/demo/monster
         ref: master
     output:
       to:
