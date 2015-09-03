@@ -2,6 +2,12 @@ kind: Template
 apiVersion: v1
 metadata:
   name: monster
+  annotations:
+    tags: instant-app,javaee
+    iconClass: icon-jboss
+    description: |
+      Ticket Monster is a moderately complex application that demonstrates how
+      to build modern applications using JBoss web technologies
 
 parameters:
 - name: MYSQL_DATABASE
