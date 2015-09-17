@@ -76,8 +76,6 @@ objects:
           ports:
           - name: http
             containerPort: 8080
-          - name: ping
-            containerPort: 8888
           - name: jolokia
             containerPort: 8778
           readinessProbe:
@@ -99,10 +97,6 @@ objects:
             value: ${MYSQL_USER}
           - name: DB_PASSWORD
             value: ${MYSQL_PASSWORD}
-          - name: OPENSHIFT_DNS_PING_SERVICE_NAME
-            value: monster
-          - name: OPENSHIFT_DNS_PING_SERVICE_PORT
-            value: "8888"
           - name: JAVA_OPTS
             value: "-Xmx512m -XX:MaxPermSize=256m -Djava.net.preferIPv4Stack=true -Djboss.modules.system.pkgs=org.jboss.logmanager -Djava.awt.headless=true -Djboss.modules.policy-permissions=true"
           - name: DEBUG
@@ -162,8 +156,6 @@ objects:
     ports:
     - name: http
       port: 8080
-    - name: ping
-      port: 8888
     selector:
       deploymentConfig: monster
 
