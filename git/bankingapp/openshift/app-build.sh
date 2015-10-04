@@ -34,9 +34,9 @@ spec:
     sourceStrategy:
       env:
       - name: http_proxy
-        value: http://openshift.example.com:8080/
+        value: $PROXY
       - name: https_proxy
-        value: http://openshift.example.com:8080/
+        value: $PROXY
       from:
         kind: ImageStreamTag
         name: jboss-eap6-openshift:6.4

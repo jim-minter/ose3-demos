@@ -1,1 +1,2 @@
-GITURL=git://openshift.example.com/demo/bankingapp
+GITURL=git://$(hostname)/demo/bankingapp
+PROXY=http://$(hostname):8080/

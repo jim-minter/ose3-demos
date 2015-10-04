@@ -4,13 +4,14 @@ import argparse
 import fcntl
 import os
 import requests
+import socket
 import struct
 import textwrap
 
 
 def parse_args():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--host", nargs="?", default="openshift.example.com")
+    ap.add_argument("--host", nargs="?", default=socket.gethostname())
     ap.add_argument("--port", nargs="?", default="4001")
     ap.add_argument("cmd", choices=["ls", "watch"])
     ap.add_argument("key", nargs="?", default="/")
