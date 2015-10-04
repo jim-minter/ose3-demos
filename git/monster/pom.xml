@@ -239,6 +239,18 @@
             <scope>provided</scope>
         </dependency>
 
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-web</artifactId>
+			<version>3.2.12.RELEASE</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jdbc</artifactId>
+			<version>3.2.12.RELEASE</version>
+		</dependency>
+
     </dependencies>
 
     <build>
