@@ -5,5 +5,4 @@ metadata:
 spec:
   containers:
   - name: hello-openshift-container
-    image: openshift/hello-openshift:latest
-    imagePullPolicy: IfNotPresent
+    image: openshift/hello-openshift:v0.4.2
