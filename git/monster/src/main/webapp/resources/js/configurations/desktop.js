@@ -24,7 +24,8 @@ requirejs.config({
         'underscore': {
         	exports: '_'
         }
-    }
+    },
+    urlArgs: "t=" + (new Date()).getTime()
 });
 
 define("initializer", ["jquery"], function ($) {
