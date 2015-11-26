@@ -66,7 +66,7 @@ def watch(url):
 
 
 if __name__ == "__main__":
-    root = "/etc/openshift/master"
+    root = "/etc/origin/master"
     cert = (root + "/master.etcd-client.crt", root + "/master.etcd-client.key")
     ca = root + "/ca.crt"
     args = parse_args()

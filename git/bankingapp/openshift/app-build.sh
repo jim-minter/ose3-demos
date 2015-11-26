@@ -32,14 +32,9 @@ spec:
   strategy:
     type: Source
     sourceStrategy:
-      env:
-      - name: http_proxy
-        value: $PROXY
-      - name: https_proxy
-        value: $PROXY
       from:
         kind: ImageStreamTag
-        name: jboss-eap6-openshift:6.4
+        name: jboss-eap64-openshift:latest
         namespace: openshift
   source:
     type: Git
