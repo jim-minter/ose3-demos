@@ -73,6 +73,8 @@ objects:
             containerPort: 8080
           - name: jolokia
             containerPort: 8778
+          - name: debug
+            containerPort: 8787
           readinessProbe:
             exec:
               command:
