@@ -34,6 +34,7 @@ objects:
       generic:
         secret: secret
     - type: ImageChange
+    - type: ConfigChange
     strategy:
       type: Source
       sourceStrategy:
