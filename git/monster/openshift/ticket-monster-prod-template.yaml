@@ -64,6 +64,7 @@ objects:
           - name: JAVA_OPTS
             value: "-Xmx512m -XX:MaxPermSize=256m -Djava.net.preferIPv4Stack=true -Djboss.modules.system.pkgs=org.jboss.logmanager -Djava.awt.headless=true -Djboss.modules.policy-permissions=true"
     triggers:
+    - type: ConfigChange
     - type: ImageChange
       imageChangeParams:
         automatic: true
@@ -80,6 +81,7 @@ objects:
     name: monster-mysql
   spec:
     triggers:
+    - type: ConfigChange
     - type: ImageChange
       imageChangeParams:
         automatic: true

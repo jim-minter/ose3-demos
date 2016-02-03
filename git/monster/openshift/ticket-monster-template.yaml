@@ -100,6 +100,7 @@ objects:
           - name: DEBUG
             value: "true"
     triggers:
+    - type: ConfigChange
     - type: ImageChange
       imageChangeParams:
         automatic: true
@@ -115,6 +116,7 @@ objects:
     name: monster-mysql
   spec:
     triggers:
+    - type: ConfigChange
     - type: ImageChange
       imageChangeParams:
         automatic: true
